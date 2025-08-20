@@ -1,22 +1,86 @@
 package com.example;
 
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Minesweeper {
+    private static final int MIN_SIZE = 2;
+    private static final int MAX_SIZE = 26;
+    private static final double MAX_MINE_DENSITY = 0.35; // Maximum allowed mine density
+    
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Welcome to Minesweeper!");
-        System.out.print("Enter the size of the grid (e.g. 4 for a 4x4 grid): ");
-        int size = scanner.nextInt();
-        int maxMines = (int) (size * size * 0.35);
-        System.out.print("Enter the number of mines to place on the grid (maximum is " + maxMines + "): ");
-        int numMines = scanner.nextInt();
-        if (numMines > maxMines) {
-            System.out.println("Number of mines exceeds the maximum allowed. Setting to " + maxMines);
-            numMines = maxMines;
+        
+        int size = getValidGridSize(scanner);
+        int numMines = getValidMineCount(scanner, size);
+        
+        try {
+            Game game = new Game(size, numMines);
+            game.play();
+        } catch (Exception e) {
+            System.out.println("An error occurred: " + e.getMessage());
+            System.out.println("Exiting the game.");
+        } finally {
+            // Don't close the scanner here if it's passed to other methods
+            // that might need it. Only close it at the very end of program execution.
+            scanner.close();
         }
-        Game game = new Game(size, numMines);
-        game.play();
-        scanner.close();
+    }
+
+    private static int getValidGridSize(Scanner scanner) {
+        int size = 0;
+        boolean validInput = false;
+        
+        while (!validInput) {
+            System.out.print("Enter the size of the grid (e.g. 4 for a 4x4 grid, min " + MIN_SIZE + ", max " + MAX_SIZE + "): ");
+            try {
+                size = scanner.nextInt();
+                scanner.nextLine(); // Consume the newline
+                
+                if (size < MIN_SIZE) {
+                    System.out.println("Grid size must be at least " + MIN_SIZE + ". Please try again.");
+                } else if (size > MAX_SIZE) {
+                    System.out.println("Grid size cannot exceed " + MAX_SIZE + " (limited by row labels A-Z). Please try again.");
+                } else {
+                    validInput = true;
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine(); // Consume the invalid input
+            }
+        }
+        
+        return size;
+    }
+    
+    private static int getValidMineCount(Scanner scanner, int size) {
+        int numMines = 0;
+        boolean validInput = false;
+        int maxMines = (int) (size * size * MAX_MINE_DENSITY);
+        int minMines = 1;
+        
+        while (!validInput) {
+            System.out.print("Enter the number of mines to place on the grid (min " + minMines + ", max " + maxMines + "): ");
+            try {
+                numMines = scanner.nextInt();
+                scanner.nextLine(); // Consume the newline
+                
+                if (numMines <= 0) {
+                    System.out.println("Number of mines must be greater than 0. Please try again.");
+                } else if (numMines > maxMines) {
+                    System.out.println("Number of mines exceeds the maximum allowed. Setting to " + maxMines);
+                    numMines = maxMines;
+                    validInput = true;
+                } else {
+                    validInput = true;
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine(); // Consume the invalid input
+            }
+        }
+        
+        return numMines;
     }
 }
