@@ -85,6 +85,86 @@ public class Game {
         // Don't close the scanner here as it could close System.in
     }
 
+    public void playSimplerVersion(Scanner scanner) {
+        gameOver = false;
+        
+        while (!gameOver) {
+            displaySimpleGrid();
+            System.out.print("Select a square to reveal (e.g. A1): ");
+            String input = scanner.nextLine().trim();
+            
+            if (isValidInput(input)) {
+                int row = Character.toUpperCase(input.charAt(0)) - 'A';
+                int col = Integer.parseInt(input.substring(1)) - 1;
+                
+                // Check if the coordinate is within the grid bounds
+                if (row >= 0 && row < grid.getSize() && col >= 0 && col < grid.getSize()) {
+                    Square square = grid.getSquare(row, col);
+                    
+                    if (square.isRevealed()) {
+                        System.out.println("This square has already been revealed. Choose another one.");
+                        continue;
+                    }
+                    
+                    if (square.isMine()) {
+                        // Game over - player hit a mine
+                        square.setRevealed(true);
+                        displaySimpleGrid();
+                        System.out.println("Oh no, you detonated a mine! Game over.");
+                        gameOver = true;
+                    } else {
+                        // Reveal the square and any connected empty squares
+                        reveal(row, col);
+                        System.out.println("This square contains " + square.getAdjacentMines() + " adjacent mines.");
+                        System.out.println();
+                        
+                        // Check if player won
+                        if (checkWin()) {
+                            displaySimpleGrid();
+                            System.out.println("Congratulations, you have won the game!");
+                            gameOver = true;
+                        }
+                    }
+                } else {
+                    System.out.println("Invalid coordinate. Please enter a valid square.");
+                }
+            } else {
+                System.out.println("Invalid input format. Please use the format like 'A1'.");
+            }
+        }
+    }
+    
+    private void displaySimpleGrid() {
+        System.out.println();
+        System.out.println("Here is your minefield:");
+        
+        // Print column headers
+        System.out.print("  ");
+        for (int i = 1; i <= grid.getSize(); i++) {
+            System.out.print(i + " ");
+        }
+        System.out.println();
+        
+        // Print grid
+        for (int i = 0; i < grid.getSize(); i++) {
+            System.out.print((char) ('A' + i) + " ");
+            for (int j = 0; j < grid.getSize(); j++) {
+                Square square = grid.getSquare(i, j);
+                if (square.isRevealed()) {
+                    if (square.isMine()) {
+                        System.out.print("* ");
+                    } else {
+                        System.out.print(square.getAdjacentMines() + " ");
+                    }
+                } else {
+                    System.out.print("_ ");
+                }
+            }
+            System.out.println();
+        }
+        System.out.println();
+    }
+
     private void toggleFlag(int row, int col) {
         if (row < 0 || row >= grid.getSize() || col < 0 || col >= grid.getSize()) {
             System.out.println("Invalid coordinates. Please enter a valid square.");
